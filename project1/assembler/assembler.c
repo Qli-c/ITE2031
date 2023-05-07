@@ -8,17 +8,45 @@
 
 int readAndParse(FILE *, char *, char *, char *, char *, char *);
 int isNumber(char *);
+int findList(FILE *ptr, char *labelarr);
+
+int findList(FILE *ptr, char *labelarr)
+{
+	int address, cnt, is_found;
+	address = 0;
+	cnt = 0;
+	is_found = 0;
+	char label[MAXLINELENGTH], opcode[MAXLINELENGTH], arg0[MAXLINELENGTH], arg1[MAXLINELENGTH], arg2[MAXLINELENGTH];
+	rewind(ptr);
+	while(readAndParse(ptr, label, opcode, arg0, arg1, arg2))
+	{
+		if(!strcmp(label, labelarr))
+		{
+			address = cnt;
+			is_found = 1;
+		}
+		cnt++;
+	}
+	if(is_found == 1)
+	{
+		return address;
+	}
+	else
+	{
+		printf("error: undefinded label\n");
+		exit(1);
+	}
+}
 
 int main(int argc, char *argv[]) 
 {
 	char *inFileString, *outFileString;
-	FILE *inFilePtr, *outFilePtr;
+	FILE *inFilePtr, *outFilePtr, *inFileSearch;
 	char label[MAXLINELENGTH], opcode[MAXLINELENGTH], arg0[MAXLINELENGTH], 
 			 arg1[MAXLINELENGTH], arg2[MAXLINELENGTH];
 
 	if (argc != 3) {
-		printf("error: usage: %s <assembly-code-file> <machine-code-file>\n",
-				argv[0]);
+		printf("error: usage: %s <assembly-code-file> <machine-code-file>\n", argv[0]);
 		exit(1);
 	}
 
@@ -36,31 +64,332 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
+	inFileSearch = fopen(inFileString, "r");
+	
 	/* here is an example for how to use readAndParse to read a line from
 		 inFilePtr */
-	if (!readAndParse(inFilePtr, label, opcode, arg0, arg1, arg2)) {
-		/* reached end of file */
+	while(readAndParse(inFilePtr, label, opcode, arg0, arg1, arg2))
+	{
+		if(strcmp(label, ""))
+		{
+			int cnt = 0;
+			char now[1000];
+			strcpy(now, label);
+			while(readAndParse(inFileSearch, label, opcode, arg0, arg1, arg2))
+			{
+				if(strcmp(now, label) == 0)
+				{
+					cnt++;
+				}
+			}
+			if(cnt > 1)
+			{
+				printf("error: duplicate definition of labels\n");
+				exit(1);
+			}
+			rewind(inFileSearch);
+		}
+		else if(strlen(label) > 6 || isNumber(label))
+		{
+			printf("error: undefined label - %s\n", label);
+			exit(1);
+		}
 	}
+
+	int addresscounter = 0;
+	//if (!readAndParse(inFilePtr, label, opcode, arg0, arg1, arg2)) {
+		/* reached end of file */
+	//}
 
 	/* TODO: Phase-1 label calculation */
 
 	/* this is how to rewind the file ptr so that you start reading from the
 		 beginning of the file */
 	rewind(inFilePtr);
+	rewind(inFileSearch);
 
+
+	while(readAndParse(inFilePtr, label, opcode, arg0, arg1, arg2))
+	{
+		int instruction = 0, regA = 0, regB = 0, destReg = 0;
 	/* TODO: Phase-2 generate machine codes to outfile */
 
 	/* after doing a readAndParse, you may want to do the following to test the
 		 opcode */
-	if (!strcmp(opcode, "add")) {
-		/* do whatever you need to do for opcode "add" */
+		if (!strcmp(opcode, "add")) {
+			/* do whatever you need to do for opcode "add" */
+			instruction = 0;
+			if(isNumber(arg0) == 0)
+			{
+				printf("error: non-integer register arguments\n");
+				exit(1);
+			}	
+			if(isNumber(arg1) == 0)
+			{
+				printf("error: non-integer register arguments\n");
+				exit(1);
+			}
+			if(isNumber(arg2) == 0)
+			{
+				printf("error: non-integer register arguments\n");
+				exit(1);
+			}
+
+			sscanf(arg0, "%d", &regA);
+			if(regA < 0 || regA > 7)
+			{
+				printf("error: registers outside the range - %d\n",regA);
+				exit(1);
+			}
+			sscanf(arg1, "%d", &regB);
+			if(regB < 0 || regB > 7)
+			{
+				printf("error: registers outside the range - %d\n",regB);
+				exit(1);
+			}
+			sscanf(arg2, "%d", &destReg);
+			if(destReg < 0 || destReg > 7)
+			{
+				printf("error: registers outside the range - %d\n",destReg);
+				exit(1);
+			}
+		}
+		else if (!strcmp(opcode, "nor")) {
+			/* do whatever you need to do for opcode "add" */
+			instruction = 1;
+			if(isNumber(arg0) == 0)
+			{
+				printf("error: non-integer register arguments\n");
+				exit(1);
+			}	
+			if(isNumber(arg1) == 0)
+			{
+				printf("error: non-integer register arguments\n");
+				exit(1);
+			}
+			if(isNumber(arg2) == 0)
+			{
+				printf("error: non-integer register arguments\n");
+				exit(1);
+			}
+
+			sscanf(arg0, "%d", &regA);
+			if(regA < 0 || regA > 7)
+			{
+				printf("error: registers outside the range - %d\n",regA);
+				exit(1);
+			}
+			sscanf(arg1, "%d", &regB);
+			if(regB < 0 || regB > 7)
+			{
+				printf("error: registers outside the range - %d\n",regB);
+				exit(1);
+			}
+			sscanf(arg2, "%d", &destReg);
+			if(destReg < 0 || destReg > 7)
+			{
+				printf("error: registers outside the range - %d\n",destReg);
+				exit(1);
+			}
+		}
+		else if (!strcmp(opcode, "lw")) {
+			/* do whatever you need to do for opcode "add" */
+			instruction = 2;
+			if(isNumber(arg0) == 0)
+			{
+				printf("error: non-integer register arguments\n");
+				exit(1);
+			}	
+			if(isNumber(arg1) == 0)
+			{
+				printf("error: non-integer register arguments\n");
+				exit(1);
+			}
+
+			sscanf(arg0, "%d", &regA);
+			if(regA < 0 || regA > 7)
+			{
+				printf("error: registers outside the range - %d\n",regA);
+				exit(1);
+			}
+			sscanf(arg1, "%d", &regB);
+			if(regB < 0 || regB > 7)
+			{
+				printf("error: registers outside the range - %d\n",regB);
+				exit(1);
+			}
+
+			if(isNumber(arg2) == 1)
+			{
+				sscanf(arg2, "%d", &destReg);
+			}
+			else
+			{
+				destReg = findList(inFileSearch, arg2);
+			}
+		}
+		else if (!strcmp(opcode, "sw")) {
+			/* do whatever you need to do for opcode "add" */
+			instruction = 3;
+			if(isNumber(arg0) == 0)
+			{
+				printf("error: non-integer register arguments\n");
+				exit(1);
+			}	
+			if(isNumber(arg1) == 0)
+			{
+				printf("error: non-integer register arguments\n");
+				exit(1);
+			}
+
+			sscanf(arg0, "%d", &regA);
+			if(regA < 0 || regA > 7)
+			{
+				printf("error: registers outside the range - %d\n",regA);
+				exit(1);
+			}
+			sscanf(arg1, "%d", &regB);
+			if(regB < 0 || regB > 7)
+			{
+				printf("error: registers outside the range - %d\n",regB);
+				exit(1);
+			}
+
+			if(isNumber(arg2) == 1)
+			{
+				sscanf(arg2, "%d", &destReg);
+			}
+			else
+			{
+				destReg = findList(inFileSearch, arg2);
+			}
+		}
+		else if (!strcmp(opcode, "beq")) {
+			/* do whatever you need to do for opcode "add" */
+			instruction = 4;
+			if(isNumber(arg0) == 0)
+			{
+				printf("error: non-integer register arguments\n");
+				exit(1);
+			}	
+			if(isNumber(arg1) == 0)
+			{
+				printf("error: non-integer register arguments\n");
+				exit(1);
+			}
+
+			sscanf(arg0, "%d", &regA);
+			if(regA < 0 || regA > 7)
+			{
+				printf("error: registers outside the range - %d\n",regA);
+				exit(1);
+			}
+			sscanf(arg1, "%d", &regB);
+			if(regB < 0 || regB > 7)
+			{
+				printf("error: registers outside the range - %d\n",regB);
+				exit(1);
+			}
+
+			if(isNumber(arg2) == 1)
+			{
+				sscanf(arg2, "%d", &destReg);
+			}
+			else
+			{
+				destReg = findList(inFileSearch, arg2) - addresscounter - 1;
+			}
+		}
+		else if (!strcmp(opcode, "jalr")) {
+			/* do whatever you need to do for opcode "add" */
+			instruction = 5;
+			if(isNumber(arg0) == 0)
+			{
+				printf("error: non-integer register arguments\n");
+				exit(1);
+			}	
+			if(isNumber(arg1) == 0)
+			{
+				printf("error: non-integer register arguments\n");
+				exit(1);
+			}
+
+			sscanf(arg0, "%d", &regA);
+			if(regA < 0 || regA > 7)
+			{
+				printf("error: registers outside the range - %d\n",regA);
+				exit(1);
+			}
+			sscanf(arg1, "%d", &regB);
+			if(regB < 0 || regB > 7)
+			{
+				printf("error: registers outside the range - %d\n",regB);
+				exit(1);
+			}
+
+		}
+
+		else if(!strcmp(opcode, "halt")){
+			instruction = 6;
+		}
+
+		else if(!strcmp(opcode, "noop")){
+			instruction = 7;
+		}
+
+		else if(!strcmp(opcode, ".fill")){
+			if(isNumber(arg0))
+			{
+				sscanf(arg0, "%d", &regA);
+				fprintf(outFilePtr, "%d\n", regA);
+				addresscounter++;
+				continue;
+			}
+			else
+			{
+				int num1 = findList(inFileSearch, arg0);
+				fprintf(outFilePtr, "%d\n", num1);
+				addresscounter++;
+				continue;
+			}
+		}
+
+		else
+		{
+			printf("error: unrecognized opcode - %s\n", opcode);
+			exit(1);
+		}
+		
+		if(destReg < -32768 || destReg > 32767)
+		{
+			printf("error: offsetField doesn't fit in 16 bits - %d\n", destReg);
+			exit(1);
+		}
+
+		if(destReg < 0)
+		{
+			destReg += 65536;
+		}
+		int output = (instruction << 22) + (regA << 19) + (regB << 16) + destReg;
+		fprintf(outFilePtr, "%d\n", output);
+		addresscounter++;
 	}
+
+
+
+
+
+
+
 
 	if (inFilePtr) {
 		fclose(inFilePtr);
 	}
 	if (outFilePtr) {
 		fclose(outFilePtr);
+	}
+	if(inFileSearch) {
+		fclose(inFileSearch);
 	}
 	return(0);
 }
