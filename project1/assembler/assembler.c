@@ -69,7 +69,12 @@ int main(int argc, char *argv[])
 	/* here is an example for how to use readAndParse to read a line from
 		 inFilePtr */
 	while(readAndParse(inFilePtr, label, opcode, arg0, arg1, arg2))
-	{
+	{	
+		if(strlen(label) > 6 || isNumber(label))
+		{
+			printf("error: undefined label - %s\n", label);
+			exit(1);
+		}
 		if(strcmp(label, ""))
 		{
 			int cnt = 0;
@@ -88,11 +93,6 @@ int main(int argc, char *argv[])
 				exit(1);
 			}
 			rewind(inFileSearch);
-		}
-		else if(strlen(label) > 6 || isNumber(label))
-		{
-			printf("error: undefined label - %s\n", label);
-			exit(1);
 		}
 	}
 
